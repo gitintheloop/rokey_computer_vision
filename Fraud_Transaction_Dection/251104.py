@@ -18,9 +18,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 # Visualization Settings
-plt.rcParams['font size'] = 12
-plt.rcParams['figure.figsize'] = (10,6)
-plt.rcParams['axes.grid'] = True
+# plt.rcParams['font size'] = 12
+# plt.rcParams['figure.figsize'] = (10,6)
+# plt.rcParams['axes.grid'] = True
              
 # Data Generation (Class Imbalance)
 # Normal Transaction : 95%
@@ -38,3 +38,15 @@ X, y = make_classification(
     flip_y=0.01,
     random_state=42
 )
+
+# Check class distribution
+np.unique(y, return_counts=True)  # unique() removes duplicate values
+unique, counts = np.unique(y, return_counts=True) # np.unique() shows the number of samples in each class
+print("normal_transaction(0): ", counts[0])
+print("fraud_transaction(1): ", counts[1])
+
+# Data Split (Stratified Sampling)
+
+X_train, X_test, y_train, y_test =\
+train_test_split(X,y, test_size=0.2, stratify=y, random_state=42)
+
