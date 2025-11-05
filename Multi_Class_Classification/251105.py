@@ -109,11 +109,14 @@ class TemperatureScaling(nn.Module): # It can controll sharpness of probalilty
         nll_criterion = nn.CrossEntropyLoss() # CrossEntropyLoss가 최소가 되도록
         optimizer = torch.optim.LBFGS([self.temperature], lr=0.01, max_iter=max_iter)
         # LBFGS(Limited Memory Broyden Fletcher Goldfarb Shanno Optimization)
-        # 2차 최적화 알고리즘 : 뉴턴 방법의 근차 형태 (근사치)
+        # 2차 미분 최적화 알고리즘 : 뉴턴 방법의 근차 형태 (근사치)
         # >> 이전 단계 변화량을 사용, 헤시안(Hesian) 근사치
         # >> 실제 수치해석에 들어가는 헤시안을 직접 구하지 않고 점진적으로 업데이트
+        # >> 최근 10단계 업데이트된 정보만 저장해서 근사치를 구함 >> 제한된 메모리 사용
         # (일반적으로 딥러닝에 사용하는 Adam, SGD 1차 미분: gradient)
+        # ROS에서도 많이 쓰임
         # LBFGS is very effective for optimizing scalar parameter.
+
         logits_list = []
         labels_list = []
 
@@ -125,13 +128,13 @@ class TemperatureScaling(nn.Module): # It can controll sharpness of probalilty
                 logits_list.append(logits)
                 labels_list.append(labels)
         
-        logits = torch.cat(logits_list)
+        logits = torch.cat(logits_list) # 붙인다
         labels = torch.cat(labels_list)
 
-        def eval_loss(): # 여러 번 loss를 평가하고 업데이트합니다.
+        def eval_loss(): # 여러 번 loss를 평가하고 업데이트
             optimizer.zero_grad()
             loss = nll_criterion(self.forward(logits), labels) # logit/T
-            loss.backward() # NLL이 작아지도록 T를 조정한다.
+            loss.backward() # NLL이 작아지도록 T를 조정
             return loss
         
         optimizer.step(eval_loss)
@@ -175,12 +178,12 @@ def plot_confusion_matrix_with_analysis(y_true, y_pred, class_names): # y이고 
                 }) 
 
     if len(error_analysis) > 0: # 오분류가 있다면
-        error_analysis.sort(key=lambda x: x['Rate'], reverse=True)
+        error_analysis.sort(key=lambda x: x['Rate'], reverse=True) # sort오름차순으로 정렬,,x['Rate']를 기준으로내림차순으로 정렬
         top_errors = error_analysis[:min(5, len(error_analysis))]
-        error_labels = [f"{e['True']}→{e['Pred']}" for e in top_errors]
+        error_labels = [f"{e['True']}→{e['Pred']}" for e in top_errors] # 진짜인데 에러로 표현이 됐다
         error_rates = [e['Rate'] * 100 for e in top_errors]
 
-        axes[1].barh(error_labels, error_rates, color='coral')
+        axes[1].barh(error_labels, error_rates, color='coral') # 바그래프인데 수평그래프
         axes[1].barh('error rate(%)',fontsize=11)
         axes[1].barh('main types of error', fontsize=14, pad=10)
         axes[1].barh(axis='x', alpha=0.3)
@@ -200,7 +203,7 @@ def plot_confusion_matrix_with_analysis(y_true, y_pred, class_names): # y이고 
 # 5. Calculate Detailed Metrics
 
 # ---------------------------------------------------------
-def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
+def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names): # proba : 퍼센티지
     precision, recall, f1, support = precision_recall_fscore_support(
         y_true, y_pred, average=None, zero_division=0
     )
@@ -219,7 +222,7 @@ def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
 
     axes[0, 0].bar(x - width, precision, width, label='Precision', alpha=0.8)
     axes[0, 0].bar(x, recall, width, label='Recall', alpha=0.8)
-    axes[0, 0].bar(x + width, f1, label='F1-Score', alpha=0.8)
+    axes[0, 0].bar(x + width, f1, width, label='F1-Score', alpha=0.8)
     axes[0, 0].set_xlabel('class', fontsize=11)
     axes[0, 0].set_ylabel('score', fontsize=11)
     axes[0, 0].set_title('calculate detailed metrics', fontsize=13, pad=10)
@@ -283,3 +286,5 @@ def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
                                 digits=3, zero_division=0))
     
     return metrics_avg
+
+#064617
