@@ -97,36 +97,36 @@ class MulitClassClassifier(nn.Module): # FeddForward Neural Network MLP
 # 3. Temperature Scaling
 
 #-------------------------------------------------------------
-class TemperatureScaling(nn.Module):
+class TemperatureScaling(nn.Module): # It can controll sharpness of probalilty
     def __init__(self):
         super().__init__()
-        self.temperature = nn.Parameter(torch.ones(1) * 1.5)
+        self.temperature = nn.Parameter(torch.ones(1) * 1.5) # initial value = 1.5
 
     def forward(self, logits):
-        return logits / self.temperature # logit/T
+        return logits / self.temperature # logit/T High T High Soft; Low T High Sharp
     
     def calibrate(self, model, val_loader, device, max_iter=50):
-        nll_criterion = nn.CrossEntropyLoss()
+        nll_criterion = nn.CrossEntropyLoss() # CrossEntropyLoss가 최소가 되도록
         optimizer = torch.optim.LBFGS([self.temperature], lr=0.01, max_iter=max_iter)
-
+        # LBFGS is very effective for optimizing scalar parameter.
         logits_list = []
         labels_list = []
 
-        model.eval()
-        with torch.no_grad():
+        model.eval() # 평가 모드로 전환 (Dropout, BN 정지)
+        with torch.no_grad(): # 그래디언트 계산 비활성화 (속도↑, 메모리↓)
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 logits = model(inputs)
                 logits_list.append(logits)
                 labels_list.append(labels)
         
-        logtis = torch.cat(logits_list)
+        logits = torch.cat(logits_list)
         labels = torch.cat(labels_list)
 
-        def eval_loss():
+        def eval_loss(): # 여러 번 loss를 평가하고 업데이트합니다.
             optimizer.zero_grad()
-            loss = nll_criterion(self.forward(logits), labels)
-            loss.backward()
+            loss = nll_criterion(self.forward(logits), labels) # logit/T
+            loss.backward() # NLL이 작아지도록 T를 조정한다.
             return loss
         
         optimizer.step(eval_loss)
