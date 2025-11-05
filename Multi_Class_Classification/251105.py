@@ -192,7 +192,7 @@ def plot_confusion_matrix_with_analysis(y_true, y_pred, class_names): # y이고 
 
 # --------------------------------------------------------
 
-# 4. Calculate Detailed Metrics
+# 5. Calculate Detailed Metrics
 
 # ---------------------------------------------------------
 def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
@@ -208,7 +208,7 @@ def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
 
     fig, axes = plt.subplots(2, 2, figsize=(15,10))
 
-    # (1) 클래스별 지표
+    # (1) Per-class metrics
     x = np.arange(len(class_names))
     width = 0.25
 
@@ -223,3 +223,58 @@ def calculate_detailed_metrics(y_true, y_pred, y_proba, class_names):
     axes[0, 0].legend()
     axes[0, 0].grid(axis='y', alpha=0.3)
     axes[0, 0].set_ylim([0, 1.1])
+
+    # (2) Comparison of averaging methods (micro, macro, weighted)
+    avg_types = ['Macro', 'Micro', 'Weighted']
+    avg_precisions = [metrics_avg['macro'][0], metrics_avg['micro'][0], metrics_avg['weighted'][0]]
+    avg_recalls = [metrics_avg['macro'][1], metrics_avg['micro'][1], metrics_avg['weighted'][1]]
+    avg_f1s = [metrics_avg['macro'][2], metrics_avg['micro'][2], metrics_avg['weighted'][2]]
+
+    x_avg = np.arange(len(avg_types))
+    axes[0, 1].bar(x_avg - width, avg_precisions, width, label='Precision', alpha=0.8)
+    axes[0, 1].bar(x_avg, avg_recalls, width, label='Recall', alpha=0.8)
+    axes[0, 1].bar(x_avg + width, avg_f1s, width, label='F1-Score', alpha=0.8)
+    axes[0, 1].set_xlabel('average method', fontsize=11)
+    axes[0, 1].set_ylabel('score', fontsize=11)
+    axes[0, 1].set_title('comparison of averaging methods', fontsize=13, pad=10)
+    axes[0, 1].set_xticks(x_avg)
+    axes[0, 1].set_xticklabels(avg_types)
+    axes[0, 1].legend()
+    axes[0, 1].grid(axis='y', alpha=0.3)
+    axes[0, 1].set_ylim([0, 1.1])
+    
+    # (3) Support vs F1
+    axes[1, 0].scatter(support, f1, s=100, alpha=0.6, c=range(len(class_names)), cmap='viridis')
+    for i, name in enumerate(class_names):
+        axes[1,0].annotate(name, (support[i], f1[i]),
+                           xytext=(5,5), textcoords='offset points', fontsize=9)
+    axes[1, 0].set_xlabel('number of samples', fontsize=11)
+    axes[1, 0].set_ylabel('F1-Score', fontsize=11)
+    axes[1, 0].set_title('Class Imbalance and performance', fontsize=13, pad=10)
+    axes[1, 0].grid(alpha=0.3)
+
+    # (4) Explaination
+    explanation = (
+        ' average method: \n\n'
+        " Macro: average per class \n"
+        " every class \n\n"
+        " Micro : based on all samples \n"
+        " the influence of the majority class \n\n"
+        " Weighted : weighted average \n"
+        " Reflecting the actual distribution "
+    )
+    axes[1, 1].text(0.1, 0.5, explanation, transform=axes[1, 1].transAxes,
+                    fontsize=11, verticalalignment='center',
+                    bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
+    axes[1, 1].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+    print("\n" + "="*60)
+    print("Classification Report")
+    print("="*60)
+    print(classification_report(y_true, y_pred, target_names=class_names,
+                                digits=3, zero_division=0))
+    
+    return metrics_avg
