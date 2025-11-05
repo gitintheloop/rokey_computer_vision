@@ -1,7 +1,7 @@
 # 251105.py
 
 # 10th Session : Advanced Evaluation Metrics and Class Imbalance Handling
-# Confusion Matrix Inerpretation 
+# Confusion Matrix Interpretation 
 # Precision, Recall, and F1-Score (Per-Class/Micro/Macro)
 # Calibration and Temperature Scaling
 # Class Imbalance Handling
@@ -133,3 +133,21 @@ class TemperatureScaling(nn.Module): # It can controll sharpness of probalilty
 
         print(f"Temperature Scaling Completed : T = {self.temperature.item():.3f}")
         return self.temperature.item()
+
+# --------------------------------------------------------
+
+# 4. Confusion Matrix Visualization
+
+# ---------------------------------------------------------
+def plot_confusion_matrix_with_analysis(y_true, y_pred, class_names):
+    cm = confusion_matrix(y_true, y_pred)
+
+    fig, axes = plt.subplots(1, 2, figsize = (15,5))
+
+    # confusion matrix
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                xticklabels=class_names, yticklabels=class_names,
+                ax=axes[0])
+    axes[0].set_title("Confusion Matrix", fontsize=14, pad=10)
+    axes[0].set_ylabel('actual class', fontsize=11)
+    axes[0].set_title('predicted class', fontsize=11)
