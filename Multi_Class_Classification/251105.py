@@ -52,7 +52,7 @@ class ImbalanceDataset(Dataset):
         
         # X : all input data, Y : all labels, this is supervised learing. Convert to a Tensor.
         self.X = torch.FloatTensor(np.vstack(X_list)) # Use np.vstack to stack all class data vertically into a single array
-        self.y = torch.LongTensor(np.vstack(y_list))  # Use np.vstack to stack all class data vertically into a single array  
+        self.y = torch.LongTensor(np.hstack(y_list))  # Use np.vstack to stack all class data vertically into a single array  
         
         # Use Counter to check whether each class has the intended imbalance ratio
         class_counts = Counter(self.y.numpy())
@@ -73,13 +73,13 @@ class MulitClassClassifier(nn.Module): # FeddForward Neural Network MLP
     def __init__(self, input_dim=20, hidden_dim=64, n_classes=4):
         super().__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
+            nn.Linear(input_dim, hidden_dim), # input layer
 
             nn.BatchNorm1d(hidden_dim),     # stabilize training, improve convergence
             nn.ReLU(),                      # non-linear activation function
             nn.Dropout(0.3),                # prevent overfitting 
 
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, hidden_dim), # hidden layer
             nn.BatchNorm1d(hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.3),
@@ -108,6 +108,11 @@ class TemperatureScaling(nn.Module): # It can controll sharpness of probalilty
     def calibrate(self, model, val_loader, device, max_iter=50):
         nll_criterion = nn.CrossEntropyLoss() # CrossEntropyLoss가 최소가 되도록
         optimizer = torch.optim.LBFGS([self.temperature], lr=0.01, max_iter=max_iter)
+        # LBFGS(Limited Memory Broyden Fletcher Goldfarb Shanno Optimization)
+        # 2차 최적화 알고리즘 : 뉴턴 방법의 근차 형태 (근사치)
+        # >> 이전 단계 변화량을 사용, 헤시안(Hesian) 근사치
+        # >> 실제 수치해석에 들어가는 헤시안을 직접 구하지 않고 점진적으로 업데이트
+        # (일반적으로 딥러닝에 사용하는 Adam, SGD 1차 미분: gradient)
         # LBFGS is very effective for optimizing scalar parameter.
         logits_list = []
         labels_list = []
