@@ -151,3 +151,38 @@ def plot_confusion_matrix_with_analysis(y_true, y_pred, class_names):
     axes[0].set_title("Confusion Matrix", fontsize=14, pad=10)
     axes[0].set_ylabel('actual class', fontsize=11)
     axes[0].set_title('predicted class', fontsize=11)
+
+    # Error Analysis
+    cm_normalized = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + 1e-10)
+
+    error_analysis = []
+    for i in range(len(class_names)):
+        for j in range(len(class_names)):
+            if i != j and cm[i,j] > 0:
+                error_analysis.append({
+                    'True': class_names[i],
+                    'Pred': class_names[j],
+                    'Count': cm[i,j],
+                    'Rate': cm_normalized[i,j] 
+                }) 
+
+    if len(error_analysis) > 0:
+        error_analysis.sort(key=lambda x: x['Rate'], reverse=True)
+        top_errors = error_analysis[:min(5, len(error_analysis))]
+        error_labels = [f"{e['True']}→{e['Pred']}" for e in top_errors]
+        error_rates = [e['Rate'] * 100 for e in top_errors]
+
+        axes[1].barh(error_labels, error_rates, color='coral')
+        axes[1].barh('error rate(%)',fontsize=11)
+        axes[1].barh('main types of error', fontsize=14, pad=10)
+        axes[1].barh(axis='x', alpha=0.3)
+    else:
+        axes[1].text(0.5, 0.5, 'Perfect Classification',
+                     transform=axes[1].transAxes, ha='center', va='center',
+                     fontsize=16)
+        axes[1].axis('off')
+
+    plt.tight_layout()
+    plt.show()
+
+    return cm
