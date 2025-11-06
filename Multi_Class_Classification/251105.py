@@ -404,3 +404,66 @@ def create_weigthed_sampler(train_loader):
     )
     
     return sampler
+
+class AugmentedWrapper(Dataset):
+    "Data Augmentation Wrapper"
+    def __init__(self, dataset, augment_ratio=0.5, noise_std=0.15):
+        self.dataset = dataset
+        self.base_len = len(dataset)
+        self.augment_len = int(self.base_len * augment_ratio)
+        self.total_len = self.base_len + self.augment_len
+        self.noise_std = noise_std
+
+    def __len__(self):
+        return self.total_len
+    
+    def __getitem__(self, idx):
+        if idx < self.base_len:
+            return self.dataset[idx]
+        else:
+            # Augmentation Sample
+            base_idx = (idx - self.base_len) % self.base_len
+            x, y = self.dataset[base_idx]
+            noise = torch.randn_like(x) * self.noise_std
+            return x + noise, y
+        
+# ===================================================================
+# 8. Training and Evaluation
+# ===================================================================
+def train_model(model, train_loader, criterion, optimizer, device, epochs=30):
+    model.train()
+    for epoch in range(epochs):
+        epoch_loss = 0.0
+        for inputs, labels in train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        if (epoch + 1) % 10 == 0:
+            avg_loss = epoch_loss / len(train_loader)
+            print(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}")
+
+def evaluate_model(model, test_loader, device):
+    model.eval()
+    all_preds = []
+    all_labels = []
+    all_probs = []
+
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs = inputs.to(device)
+            outputs = model(inputs)
+            probs = F.softmax(outputs, dim=1)
+            preds = torch.argmax(probs, dim=1)
+
+            all_preds.extend(preds.cpu().numpy().tolist())
+            all_labels.extend(labels.numpy().tolist())
+            all_probs.extend(probs.cpu().numpy().tolist())
+
+    return np.array(all_labels), np.array(all_preds), np.array(all_probs)
