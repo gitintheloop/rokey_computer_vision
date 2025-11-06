@@ -498,7 +498,7 @@ def main():
     )
 
     class_names = ['Class 0', 'Class 1', 'Class 2', 'Class 3']
-    test_loader = DataLoader(test_dataset, batch_size=64, shuggle=True)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=True)
 
     # ------------------------------------------------------------
 
