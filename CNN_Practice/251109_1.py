@@ -25,6 +25,7 @@ print("=" * 100)
 
 output = cnn1(input)
 print(output.shape)
+print("=" * 100)
 
 input = torch.tensor([[[12 , 20 , 30, 0],
                        [8  , 12 , 2 , 0],
@@ -33,4 +34,14 @@ input = torch.tensor([[[12 , 20 , 30, 0],
 
 MaxPool = torch.nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 Output = MaxPool(input)
+print(Output)
+print("=" * 100)
+
+input = torch.tensor([[[12 ,20 ,30, 0],
+                       [8  ,12 ,2 , 0],
+                       [34 ,70 ,37, 4],
+                       [112,100,25,12]]])
+
+AvgPool = torch.nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
+Output = AvgPool(input)
 print(Output)
