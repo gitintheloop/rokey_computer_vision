@@ -103,7 +103,7 @@ model = NeuralNetwork().to(device)
 print(model)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGE(model.parameters(), lr=1e-3)
+optimizer = torch.optim.SGD(model.parameters(), lr=1e-3)
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -118,8 +118,8 @@ def train(dataloader, model, loss_fn, optimizer):
         optimizer.step()
 
         if batch % 100 == 0:
-            loss, current = loss.item(), batch * len(x)
-            print(f"loss: {loss:>7f} [{currnet:>5d}/{size:>5d}]")
+            loss, current = loss.item(), batch * len(X)
+            print(f"loss: {loss:>7f} [{current:>5d}/{size:>5d}]")
 
 def test(dataloader, model, loss_fn):
     size = len(dataloader.dataset)
@@ -130,7 +130,7 @@ def test(dataloader, model, loss_fn):
     with torch.no_grad():
         for X, y in dataloader:
             X, y = X.to(device), y.to(device)
-            pred = model(x)
+            pred = model(X)
             test_loss += loss_fn(pred, y).item()
             correct += (pred.argmax(1) == y).type(torch.float).sum().item()
 
@@ -145,3 +145,10 @@ for t in range(epochs):
     train(train_dataloader, model, loss_fn, optimizer)
     test(test_dataloader, model, loss_fn)
 print("Done!")
+
+torch.save(model.state_dict(), "model.pth")
+print("Saved PyTorch Model State to model.pth")
+
+load_model = NeuralNetwork()
+load_model.load_state_dict(torch.load("model.pth"))
+print(load_model)
