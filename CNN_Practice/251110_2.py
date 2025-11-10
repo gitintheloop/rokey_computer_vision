@@ -3,6 +3,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.datasets as datasets
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -18,6 +22,13 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
                           # (Batchsize, Channel, Width, Height)  
     def forward(self, x): # x의 shape: [N, 3, 32, 32]
-         x = self.pool(F.relu(self.conv1(x)))  # [N, 6, 14, 14]
-         x = self.pool(F.relu(self.conv2(x)))  # [N, 16, 5, 5] 
+        x = self.pool(F.relu(self.conv1(x)))  # [N, 6, 14, 14]
+        x = self.pool(F.relu(self.conv2(x)))  # [N, 16, 5, 5] 
+        
+        x = x.view(x.size(0), -1)
 
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+
+        return x
